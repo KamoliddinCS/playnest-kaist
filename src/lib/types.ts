@@ -1,0 +1,46 @@
+export type UserRole = "user" | "admin";
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  name: string | null;
+  role: UserRole;
+  created_at: string;
+}
+
+export type ConsoleStatus = "available" | "maintenance";
+
+export interface Console {
+  id: string;
+  label: string;
+  status: ConsoleStatus;
+  created_at: string;
+}
+
+export type BookingStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "picked_up"
+  | "returned";
+
+export interface Booking {
+  id: string;
+  user_id: string;
+  console_id: string | null;
+  start_at: string;
+  end_at: string;
+  status: BookingStatus;
+  notes: string | null;
+  created_at: string;
+}
+
+/** Booking joined with user email (for admin views). */
+export interface BookingWithUser extends Booking {
+  users: { email: string } | null;
+}
+
+/** Booking joined with console label (for user views). */
+export interface BookingWithConsole extends Booking {
+  consoles: { label: string } | null;
+}
