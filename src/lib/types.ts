@@ -14,7 +14,21 @@ export interface Console {
   id: string;
   label: string;
   status: ConsoleStatus;
+  image_url: string | null;
   created_at: string;
+}
+
+export interface Game {
+  id: string;
+  console_id: string;
+  title: string;
+  image_url: string | null;
+  created_at: string;
+}
+
+/** Console with its associated games list. */
+export interface ConsoleWithGames extends Console {
+  games: Game[];
 }
 
 export type BookingStatus =

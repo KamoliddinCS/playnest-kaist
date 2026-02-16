@@ -4,11 +4,8 @@ import type { UserProfile } from "@/lib/types";
 
 /**
  * Returns the authenticated user's profile, or a NextResponse error if not
- * authenticated. Use in route handlers:
- *
- *   const result = await requireAuth();
- *   if (result instanceof NextResponse) return result;
- *   const { user, profile } = result;
+ * authenticated. If the user is authenticated but has no profile row yet,
+ * one is created automatically (handles race conditions / callback issues).
  */
 export async function requireAuth(): Promise<
   | NextResponse
@@ -24,14 +21,44 @@ export async function requireAuth(): Promise<
   }
 
   const admin = createSupabaseAdmin();
-  const { data: profile, error } = await admin
+
+  // Try to fetch existing profile.
+  let { data: profile, error } = await admin
     .from("users")
     .select("*")
     .eq("id", user.id)
     .single();
 
+  // If no profile exists yet, create one on the fly.
   if (error || !profile) {
-    return NextResponse.json({ error: "Profile not found" }, { status: 401 });
+    const name = user.user_metadata?.full_name ?? null;
+    const { data: newProfile, error: insertErr } = await admin
+      .from("users")
+      .upsert(
+        { id: user.id, email: user.email!, name },
+        { onConflict: "id", ignoreDuplicates: true }
+      )
+      .select("*")
+      .single();
+
+    if (insertErr || !newProfile) {
+      // If upsert with ignoreDuplicates didn't return a row, re-fetch.
+      const { data: refetched } = await admin
+        .from("users")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (!refetched) {
+        return NextResponse.json(
+          { error: "Failed to create user profile." },
+          { status: 500 }
+        );
+      }
+      profile = refetched;
+    } else {
+      profile = newProfile;
+    }
   }
 
   return {

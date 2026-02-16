@@ -36,15 +36,20 @@ import {
 import type {
   BookingStatus,
   BookingWithUser,
-  Console,
+  ConsoleWithGames,
+  Game,
   UserRole,
 } from "@/lib/types";
 import {
   Check,
+  ChevronDown,
+  ChevronRight,
+  Disc3,
   Loader2,
   Plus,
   ShieldCheck,
   ToggleLeft,
+  Trash2,
   X,
   PackageCheck,
   PackageOpen,
@@ -295,16 +300,19 @@ function BookingsTab() {
 /* ──────────────── Consoles Tab ──────────────── */
 
 function ConsolesTab() {
-  const [consoles, setConsoles] = useState<Console[]>([]);
+  const [consoles, setConsoles] = useState<ConsoleWithGames[]>([]);
   const [loading, setLoading] = useState(true);
   const [newLabel, setNewLabel] = useState("");
+  const [newImageUrl, setNewImageUrl] = useState("");
   const [adding, setAdding] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/consoles");
+      // Reuse the catalogue endpoint which includes games.
+      const res = await fetch("/api/catalogue");
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
       setConsoles(json);
@@ -326,12 +334,16 @@ function ConsolesTab() {
       const res = await fetch("/api/admin/consoles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ label: newLabel.trim() }),
+        body: JSON.stringify({
+          label: newLabel.trim(),
+          image_url: newImageUrl.trim() || null,
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
       toast.success("Device added.");
       setNewLabel("");
+      setNewImageUrl("");
       setDialogOpen(false);
       load();
     } catch (e: unknown) {
@@ -341,7 +353,7 @@ function ConsolesTab() {
     }
   };
 
-  const toggleStatus = async (c: Console) => {
+  const toggleStatus = async (c: ConsoleWithGames) => {
     setToggling(c.id);
     const newStatus = c.status === "available" ? "maintenance" : "available";
     try {
@@ -376,7 +388,7 @@ function ConsolesTab() {
           <div>
             <CardTitle className="text-lg">Devices</CardTitle>
             <CardDescription>
-              Manage the devices available for rental.
+              Manage devices and their game libraries.
             </CardDescription>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -389,20 +401,39 @@ function ConsolesTab() {
               <DialogHeader>
                 <DialogTitle>Add New Device</DialogTitle>
                 <DialogDescription>
-                  Provide a label for the new device (e.g. &quot;PS5 #1&quot;, &quot;Nintendo Switch #2&quot;).
+                  Provide a label and an optional image URL for the device.
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-2">
-                <Label htmlFor="consoleLabel">Label</Label>
-                <Input
-                  id="consoleLabel"
-                  placeholder='e.g. "PS5 #1", "Nintendo Switch Lite"'
-                  value={newLabel}
-                  onChange={(e) => setNewLabel(e.target.value)}
-                />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="consoleLabel">Label</Label>
+                  <Input
+                    id="consoleLabel"
+                    placeholder='e.g. "PS5 #1", "Nintendo Switch Lite"'
+                    value={newLabel}
+                    onChange={(e) => setNewLabel(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="consoleImage">Image URL (optional)</Label>
+                  <Input
+                    id="consoleImage"
+                    type="url"
+                    placeholder="https://example.com/device.png"
+                    value={newImageUrl}
+                    onChange={(e) => setNewImageUrl(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Paste a direct link to a product image. Leave blank for a
+                    default icon.
+                  </p>
+                </div>
               </div>
               <DialogFooter>
-                <Button onClick={addConsole} disabled={adding || !newLabel.trim()}>
+                <Button
+                  onClick={addConsole}
+                  disabled={adding || !newLabel.trim()}
+                >
                   {adding ? "Adding…" : "Add Device"}
                 </Button>
               </DialogFooter>
@@ -419,7 +450,9 @@ function ConsolesTab() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-8" />
                 <TableHead>Label</TableHead>
+                <TableHead>Games</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="text-right">Toggle</TableHead>
@@ -427,39 +460,230 @@ function ConsolesTab() {
             </TableHeader>
             <TableBody>
               {consoles.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell className="font-medium">{c.label}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        c.status === "available" ? "success" : "warning"
-                      }
-                    >
-                      {c.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {format(new Date(c.created_at), "MMM d, yyyy")}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => toggleStatus(c)}
-                      disabled={toggling === c.id}
-                    >
-                      <ToggleLeft className="mr-1 h-3 w-3" />
-                      {c.status === "available"
-                        ? "Set Maintenance"
-                        : "Set Available"}
-                    </Button>
-                  </TableCell>
-                </TableRow>
+                <ConsoleRow
+                  key={c.id}
+                  console={c}
+                  expanded={expanded === c.id}
+                  onToggleExpand={() =>
+                    setExpanded(expanded === c.id ? null : c.id)
+                  }
+                  onToggleStatus={() => toggleStatus(c)}
+                  toggling={toggling === c.id}
+                  onReload={load}
+                />
               ))}
             </TableBody>
           </Table>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+/* ──────────── Console Row with Games ──────────── */
+
+function ConsoleRow({
+  console: c,
+  expanded,
+  onToggleExpand,
+  onToggleStatus,
+  toggling,
+  onReload,
+}: {
+  console: ConsoleWithGames;
+  expanded: boolean;
+  onToggleExpand: () => void;
+  onToggleStatus: () => void;
+  toggling: boolean;
+  onReload: () => void;
+}) {
+  const [newGame, setNewGame] = useState("");
+  const [newGameImage, setNewGameImage] = useState("");
+  const [addingGame, setAddingGame] = useState(false);
+  const [deletingGame, setDeletingGame] = useState<string | null>(null);
+  const gameCount = c.games?.length ?? 0;
+
+  const addGame = async () => {
+    if (!newGame.trim()) return;
+    setAddingGame(true);
+    try {
+      const res = await fetch("/api/admin/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          console_id: c.id,
+          title: newGame.trim(),
+          image_url: newGameImage.trim() || null,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
+      toast.success("Game added.");
+      setNewGame("");
+      setNewGameImage("");
+      onReload();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Failed to add game.");
+    } finally {
+      setAddingGame(false);
+    }
+  };
+
+  const deleteGame = async (gameId: string) => {
+    setDeletingGame(gameId);
+    try {
+      const res = await fetch(`/api/admin/games/${gameId}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
+      toast.success("Game removed.");
+      onReload();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Failed to remove game.");
+    } finally {
+      setDeletingGame(null);
+    }
+  };
+
+  return (
+    <>
+      <TableRow
+        className="cursor-pointer"
+        onClick={onToggleExpand}
+      >
+        <TableCell className="w-8 pr-0">
+          {expanded ? (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          )}
+        </TableCell>
+        <TableCell className="font-medium">{c.label}</TableCell>
+        <TableCell>
+          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+            <Disc3 className="h-3 w-3" />
+            {gameCount}
+          </span>
+        </TableCell>
+        <TableCell>
+          <Badge
+            variant={c.status === "available" ? "success" : "warning"}
+          >
+            {c.status}
+          </Badge>
+        </TableCell>
+        <TableCell className="text-xs text-muted-foreground">
+          {format(new Date(c.created_at), "MMM d, yyyy")}
+        </TableCell>
+        <TableCell className="text-right">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleStatus();
+            }}
+            disabled={toggling}
+          >
+            <ToggleLeft className="mr-1 h-3 w-3" />
+            {c.status === "available" ? "Set Maintenance" : "Set Available"}
+          </Button>
+        </TableCell>
+      </TableRow>
+
+      {expanded && (
+        <TableRow>
+          <TableCell colSpan={6} className="bg-muted/30 p-4">
+            <div className="space-y-3">
+              <p className="text-sm font-medium">
+                Games for {c.label} ({gameCount})
+              </p>
+
+              {/* Add game inputs */}
+              <div className="flex flex-wrap gap-2">
+                <Input
+                  placeholder="Game title…"
+                  value={newGame}
+                  onChange={(e) => setNewGame(e.target.value)}
+                  className="max-w-xs"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") addGame();
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <Input
+                  placeholder="Image URL (optional)"
+                  type="url"
+                  value={newGameImage}
+                  onChange={(e) => setNewGameImage(e.target.value)}
+                  className="max-w-xs"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") addGame();
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <Button
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    addGame();
+                  }}
+                  disabled={addingGame || !newGame.trim()}
+                >
+                  {addingGame ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Plus className="mr-1 h-3 w-3" /> Add
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Game list */}
+              {gameCount === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No games added yet.
+                </p>
+              ) : (
+                <ul className="space-y-1">
+                  {c.games.map((g) => (
+                    <li
+                      key={g.id}
+                      className="flex items-center justify-between rounded-md px-3 py-1.5 text-sm hover:bg-muted"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Disc3 className="h-3.5 w-3.5 text-primary" />
+                        {g.title}
+                        {g.image_url && (
+                          <span className="text-xs text-muted-foreground">(has image)</span>
+                        )}
+                      </span>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        disabled={deletingGame === g.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteGame(g.id);
+                        }}
+                      >
+                        {deletingGame === g.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   );
 }

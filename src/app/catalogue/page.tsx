@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -12,8 +12,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { Console } from "@/lib/types";
+import type { ConsoleWithGames } from "@/lib/types";
 import {
+  Disc3,
   Gamepad2,
   Loader2,
   MonitorSmartphone,
@@ -21,24 +22,27 @@ import {
   Wrench,
 } from "lucide-react";
 
-/** Map of device label keywords → icons (extensible). */
-function deviceIcon(label: string) {
+/** Fallback icon when no image is available. */
+function DeviceFallbackIcon({ label }: { label: string }) {
   const lower = label.toLowerCase();
-  if (
+  const isConsole =
     lower.includes("ps5") ||
     lower.includes("ps4") ||
     lower.includes("playstation") ||
     lower.includes("xbox") ||
     lower.includes("switch") ||
-    lower.includes("nintendo")
-  ) {
-    return <Gamepad2 className="h-10 w-10" />;
-  }
-  return <MonitorSmartphone className="h-10 w-10" />;
+    lower.includes("nintendo") ||
+    lower.includes("steam deck");
+
+  return isConsole ? (
+    <Gamepad2 className="h-12 w-12 text-muted-foreground/50" />
+  ) : (
+    <MonitorSmartphone className="h-12 w-12 text-muted-foreground/50" />
+  );
 }
 
 export default function CataloguePage() {
-  const [devices, setDevices] = useState<Console[]>([]);
+  const [devices, setDevices] = useState<ConsoleWithGames[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -77,8 +81,8 @@ export default function CataloguePage() {
       <div className="mb-10">
         <h1 className="text-3xl font-bold tracking-tight">Device Catalogue</h1>
         <p className="mt-2 max-w-xl text-muted-foreground">
-          Browse the devices currently in our collection. Pick one you&apos;d like
-          to rent and submit a booking request.
+          Browse the devices currently in our collection. Pick one you&apos;d
+          like to rent and submit a booking request.
         </p>
       </div>
 
@@ -125,54 +129,71 @@ export default function CataloguePage() {
   );
 }
 
-function DeviceCard({ device }: { device: Console }) {
+function DeviceCard({ device }: { device: ConsoleWithGames }) {
   const isAvailable = device.status === "available";
+  const [imgError, setImgError] = useState(false);
+  const gameCount = device.games?.length ?? 0;
 
   return (
-    <Card
-      className={`flex flex-col transition-shadow hover:shadow-md ${
-        !isAvailable ? "opacity-60" : ""
-      }`}
-    >
-      <CardHeader className="flex flex-row items-start gap-4 space-y-0 pb-3">
+    <Link href={`/catalogue/${device.id}`} className="group block">
+      <Card
+        className={`flex flex-col overflow-hidden transition-shadow group-hover:shadow-lg ${
+          !isAvailable ? "opacity-60" : ""
+        }`}
+      >
+        {/* Image area */}
         <div
-          className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-xl ${
-            isAvailable
-              ? "bg-primary/10 text-primary"
-              : "bg-muted text-muted-foreground"
+          className={`relative flex h-44 items-center justify-center overflow-hidden ${
+            isAvailable ? "bg-muted/40" : "bg-muted/60"
           }`}
         >
-          {deviceIcon(device.label)}
+          {device.image_url && !imgError ? (
+            <Image
+              src={device.image_url}
+              alt={device.label}
+              fill
+              className="object-cover transition-transform group-hover:scale-105"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <DeviceFallbackIcon label={device.label} />
+          )}
         </div>
-        <div className="min-w-0 flex-1">
+
+        <CardHeader className="pb-2 pt-4">
           <CardTitle className="text-base leading-snug">
             {device.label}
           </CardTitle>
-          <div className="mt-1.5">
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
             <Badge variant={isAvailable ? "success" : "warning"}>
               {isAvailable ? "Available" : "Maintenance"}
             </Badge>
+            {gameCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                <Disc3 className="h-3 w-3" />
+                {gameCount} {gameCount === 1 ? "game" : "games"}
+              </span>
+            )}
           </div>
-        </div>
-      </CardHeader>
+        </CardHeader>
 
-      <CardContent className="flex-1" />
+        <CardContent className="flex-1" />
 
-      <CardFooter>
-        {isAvailable ? (
-          <Button asChild className="w-full gap-2" size="sm">
-            <Link href={`/book?device=${device.id}`}>
+        <CardFooter className="pt-0">
+          {isAvailable ? (
+            <span className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
               <CalendarPlus className="h-4 w-4" />
-              Request Rental
-            </Link>
-          </Button>
-        ) : (
-          <Button disabled className="w-full gap-2" size="sm" variant="outline">
-            <Wrench className="h-4 w-4" />
-            Unavailable
-          </Button>
-        )}
-      </CardFooter>
-    </Card>
+              View &amp; Rent
+            </span>
+          ) : (
+            <span className="inline-flex w-full items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium text-muted-foreground">
+              <Wrench className="h-4 w-4" />
+              Unavailable
+            </span>
+          )}
+        </CardFooter>
+      </Card>
+    </Link>
   );
 }

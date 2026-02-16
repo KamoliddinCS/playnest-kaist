@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/supabase/auth-helpers";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 
-export async function GET() {
+export async function GET(
+  _request: Request,
+  { params }: { params: { id: string } }
+) {
   const authResult = await requireAuth();
   if (authResult instanceof NextResponse) return authResult;
 
@@ -11,22 +14,21 @@ export async function GET() {
   const { data, error } = await admin
     .from("consoles")
     .select("*, games(*)")
-    .order("label", { ascending: true });
+    .eq("id", params.id)
+    .single();
 
-  if (error) {
+  if (error || !data) {
     return NextResponse.json(
-      { error: "Failed to fetch devices." },
-      { status: 500 }
+      { error: "Device not found." },
+      { status: 404 }
     );
   }
 
-  // Sort games alphabetically within each console.
-  const withSortedGames = (data ?? []).map((console) => ({
-    ...console,
-    games: (console.games ?? []).sort((a: { title: string }, b: { title: string }) =>
+  // Sort games alphabetically.
+  data.games = (data.games ?? []).sort(
+    (a: { title: string }, b: { title: string }) =>
       a.title.localeCompare(b.title)
-    ),
-  }));
+  );
 
-  return NextResponse.json(withSortedGames);
+  return NextResponse.json(data);
 }

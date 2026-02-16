@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,54 +17,48 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Mail, CheckCircle2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Mail, Lock, Loader2, Eye, EyeOff, UserRound } from "lucide-react";
+
+/* ─── Validation ─── */
 
 const domainPattern = ALLOWED_EMAIL_DOMAINS.map((d) =>
   d.replace(".", "\\.")
 ).join("|");
 
-const loginSchema = z.object({
-  email: z
-    .string()
-    .email("Please enter a valid email address.")
-    .regex(
-      new RegExp(`@(${domainPattern})$`, "i"),
-      `Only ${ALLOWED_EMAIL_DOMAINS.join(", ")} emails are allowed.`
-    ),
+const emailField = z
+  .string()
+  .email("Please enter a valid email address.")
+  .regex(
+    new RegExp(`@(${domainPattern})$`, "i"),
+    `Only ${ALLOWED_EMAIL_DOMAINS.join(", ")} emails are allowed.`
+  );
+
+const signInSchema = z.object({
+  email: emailField,
+  password: z.string().min(1, "Password is required."),
 });
 
-type LoginForm = z.infer<typeof loginSchema>;
-
-export default function LoginPage() {
-  const [sent, setSent] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(null);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
+const signUpSchema = z
+  .object({
+    name: z.string().min(1, "Name is required."),
+    email: emailField,
+    password: z.string().min(6, "Password must be at least 6 characters."),
+    confirmPassword: z.string(),
+  })
+  .refine((v) => v.password === v.confirmPassword, {
+    message: "Passwords do not match.",
+    path: ["confirmPassword"],
   });
 
-  const onSubmit = async (data: LoginForm) => {
-    setServerError(null);
-    const supabase = createSupabaseBrowser();
+type SignInForm = z.infer<typeof signInSchema>;
+type SignUpForm = z.infer<typeof signUpSchema>;
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email: data.email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+/* ─── Page ─── */
 
-    if (error) {
-      setServerError(error.message);
-      return;
-    }
-
-    setSent(true);
-  };
+export default function LoginPage() {
+  const router = useRouter();
+  const [tab, setTab] = useState<"signin" | "signup">("signin");
 
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center px-4">
@@ -72,63 +67,314 @@ export default function LoginPage() {
           <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-lg font-black text-primary-foreground">
             PN
           </div>
-          <CardTitle className="text-2xl">Sign in to PlayNest</CardTitle>
+          <CardTitle className="text-2xl">
+            {tab === "signin" ? "Sign in to PlayNest" : "Create an Account"}
+          </CardTitle>
           <CardDescription>
-            Enter your KAIST email to receive a magic link.
+            {tab === "signin"
+              ? "Enter your KAIST email and password."
+              : "Sign up with your KAIST email to get started."}
           </CardDescription>
         </CardHeader>
 
         <CardContent>
-          {sent ? (
-            <div className="flex flex-col items-center gap-4 py-6 text-center">
-              <CheckCircle2 className="h-12 w-12 text-green-600" />
-              <div>
-                <p className="font-semibold">Check your email!</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  We&apos;ve sent a magic link to your KAIST email. Click the
-                  link to sign in.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@kaist.ac.kr"
-                    className="pl-9"
-                    {...register("email")}
-                  />
-                </div>
-                {errors.email && (
-                  <p className="text-sm text-destructive">
-                    {errors.email.message}
-                  </p>
-                )}
-                {serverError && (
-                  <p className="text-sm text-destructive">{serverError}</p>
-                )}
-              </div>
+          <Tabs
+            value={tab}
+            onValueChange={(v) => setTab(v as "signin" | "signup")}
+          >
+            <TabsList className="mb-4 grid w-full grid-cols-2">
+              <TabsTrigger value="signin">Sign In</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            </TabsList>
 
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Sending…" : "Send Magic Link"}
-              </Button>
+            <TabsContent value="signin">
+              <SignInFormComponent
+                onSuccess={() => {
+                  router.push("/catalogue");
+                  router.refresh();
+                }}
+              />
+            </TabsContent>
 
-              <p className="text-center text-xs text-muted-foreground">
-                Only{" "}
-                <span className="font-medium">
-                  {ALLOWED_EMAIL_DOMAINS.join(", ")}
-                </span>{" "}
-                addresses are accepted.
-              </p>
-            </form>
-          )}
+            <TabsContent value="signup">
+              <SignUpFormComponent
+                onSuccess={() => {
+                  router.push("/catalogue");
+                  router.refresh();
+                }}
+              />
+            </TabsContent>
+          </Tabs>
+
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            Only{" "}
+            <span className="font-medium">
+              {ALLOWED_EMAIL_DOMAINS.join(", ")}
+            </span>{" "}
+            addresses are accepted.
+          </p>
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+/* ─── Sign In Form ─── */
+
+function SignInFormComponent({ onSuccess }: { onSuccess: () => void }) {
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignInForm>({
+    resolver: zodResolver(signInSchema),
+  });
+
+  const onSubmit = async (data: SignInForm) => {
+    setServerError(null);
+    const supabase = createSupabaseBrowser();
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    });
+
+    if (error) {
+      setServerError(error.message);
+      return;
+    }
+
+    onSuccess();
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {/* Email */}
+      <div className="space-y-2">
+        <Label htmlFor="signin-email">Email</Label>
+        <div className="relative">
+          <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="signin-email"
+            type="email"
+            placeholder="you@kaist.ac.kr"
+            className="pl-9"
+            {...register("email")}
+          />
+        </div>
+        {errors.email && (
+          <p className="text-sm text-destructive">{errors.email.message}</p>
+        )}
+      </div>
+
+      {/* Password */}
+      <div className="space-y-2">
+        <Label htmlFor="signin-password">Password</Label>
+        <div className="relative">
+          <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="signin-password"
+            type={showPassword ? "text" : "password"}
+            placeholder="••••••••"
+            className="pl-9 pr-10"
+            {...register("password")}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+            tabIndex={-1}
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </button>
+        </div>
+        {errors.password && (
+          <p className="text-sm text-destructive">{errors.password.message}</p>
+        )}
+      </div>
+
+      {serverError && (
+        <p className="text-sm text-destructive">{serverError}</p>
+      )}
+
+      <Button type="submit" className="w-full" disabled={isSubmitting}>
+        {isSubmitting ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Signing in…
+          </>
+        ) : (
+          "Sign In"
+        )}
+      </Button>
+    </form>
+  );
+}
+
+/* ─── Sign Up Form ─── */
+
+function SignUpFormComponent({ onSuccess }: { onSuccess: () => void }) {
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignUpForm>({
+    resolver: zodResolver(signUpSchema),
+  });
+
+  const onSubmit = async (data: SignUpForm) => {
+    setServerError(null);
+    const supabase = createSupabaseBrowser();
+
+    const { data: signUpData, error } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        data: { full_name: data.name },
+      },
+    });
+
+    if (error) {
+      setServerError(error.message);
+      return;
+    }
+
+    // If Supabase returned a session, the user is signed in immediately
+    // (email confirmation is disabled).
+    if (signUpData.session) {
+      onSuccess();
+      return;
+    }
+
+    // If no session was returned, sign in explicitly with the credentials.
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    });
+
+    if (signInError) {
+      // If sign-in fails, it likely means email confirmation IS required.
+      setServerError(
+        "Account created! Please check your email to confirm, then sign in."
+      );
+      return;
+    }
+
+    onSuccess();
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {/* Name */}
+      <div className="space-y-2">
+        <Label htmlFor="signup-name">Full Name</Label>
+        <div className="relative">
+          <UserRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="signup-name"
+            type="text"
+            placeholder="Hong Gildong"
+            className="pl-9"
+            {...register("name")}
+          />
+        </div>
+        {errors.name && (
+          <p className="text-sm text-destructive">{errors.name.message}</p>
+        )}
+      </div>
+
+      {/* Email */}
+      <div className="space-y-2">
+        <Label htmlFor="signup-email">Email</Label>
+        <div className="relative">
+          <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="signup-email"
+            type="email"
+            placeholder="you@kaist.ac.kr"
+            className="pl-9"
+            {...register("email")}
+          />
+        </div>
+        {errors.email && (
+          <p className="text-sm text-destructive">{errors.email.message}</p>
+        )}
+      </div>
+
+      {/* Password */}
+      <div className="space-y-2">
+        <Label htmlFor="signup-password">Password</Label>
+        <div className="relative">
+          <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="signup-password"
+            type={showPassword ? "text" : "password"}
+            placeholder="Min. 6 characters"
+            className="pl-9 pr-10"
+            {...register("password")}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+            tabIndex={-1}
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </button>
+        </div>
+        {errors.password && (
+          <p className="text-sm text-destructive">{errors.password.message}</p>
+        )}
+      </div>
+
+      {/* Confirm Password */}
+      <div className="space-y-2">
+        <Label htmlFor="signup-confirm">Confirm Password</Label>
+        <div className="relative">
+          <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="signup-confirm"
+            type={showPassword ? "text" : "password"}
+            placeholder="Re-enter password"
+            className="pl-9"
+            {...register("confirmPassword")}
+          />
+        </div>
+        {errors.confirmPassword && (
+          <p className="text-sm text-destructive">
+            {errors.confirmPassword.message}
+          </p>
+        )}
+      </div>
+
+      {serverError && (
+        <p className="text-sm text-destructive">{serverError}</p>
+      )}
+
+      <Button type="submit" className="w-full" disabled={isSubmitting}>
+        {isSubmitting ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Creating account…
+          </>
+        ) : (
+          "Create Account"
+        )}
+      </Button>
+    </form>
   );
 }

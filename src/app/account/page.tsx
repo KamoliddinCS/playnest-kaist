@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { createSupabaseBrowser } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -11,20 +14,64 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2, LogOut, User } from "lucide-react";
+import { Loader2, LogOut, Pencil, Save, User, X } from "lucide-react";
+import type { UserProfile } from "@/lib/types";
 
 export default function AccountPage() {
   const router = useRouter();
-  const [email, setEmail] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const supabase = createSupabaseBrowser();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setEmail(user?.email ?? null);
-      setLoading(false);
-    });
+    async function load() {
+      try {
+        const res = await fetch("/api/profile");
+        if (res.ok) {
+          const data: UserProfile = await res.json();
+          setProfile(data);
+          setNameInput(data.name ?? "");
+        }
+      } catch {
+        // ignore
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, []);
+
+  const handleSaveName = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: nameInput }),
+      });
+
+      if (!res.ok) {
+        toast.error("Failed to update name.");
+        return;
+      }
+
+      const updated: UserProfile = await res.json();
+      setProfile(updated);
+      setEditing(false);
+      toast.success("Name updated!");
+    } catch {
+      toast.error("Network error.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setNameInput(profile?.name ?? "");
+    setEditing(false);
+  };
 
   const handleSignOut = async () => {
     const supabase = createSupabaseBrowser();
@@ -53,10 +100,95 @@ export default function AccountPage() {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <div>
-            <p className="text-sm text-muted-foreground">Email</p>
-            <p className="font-medium">{email}</p>
+          {/* Name */}
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground">Name</Label>
+            {editing ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  placeholder="Your full name"
+                  className="flex-1"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSaveName();
+                    if (e.key === "Escape") handleCancelEdit();
+                  }}
+                />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={handleSaveName}
+                  disabled={saving}
+                  className="shrink-0"
+                >
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={handleCancelEdit}
+                  disabled={saving}
+                  className="shrink-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <p className="font-medium">
+                  {profile?.name || (
+                    <span className="italic text-muted-foreground">
+                      Not set
+                    </span>
+                  )}
+                </p>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setEditing(true)}
+                  className="shrink-0"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
+
+          {/* Email */}
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground">Email</Label>
+            <p className="font-medium">{profile?.email}</p>
+          </div>
+
+          {/* Role */}
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground">Role</Label>
+            <p className="font-medium capitalize">{profile?.role}</p>
+          </div>
+
+          {/* Member since */}
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground">
+              Member since
+            </Label>
+            <p className="font-medium">
+              {profile?.created_at
+                ? new Date(profile.created_at).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })
+                : "—"}
+            </p>
+          </div>
+
+          <hr />
 
           <Button
             onClick={handleSignOut}

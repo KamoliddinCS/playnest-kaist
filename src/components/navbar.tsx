@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createSupabaseBrowser } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LogOut, Menu, X } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useEffect, useState } from "react";
 import type { UserRole } from "@/lib/types";
 
@@ -104,7 +105,8 @@ export function Navbar() {
             ))}
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <ThemeToggle />
             {!loading && !user && (
               <Button asChild size="sm">
                 <Link href="/login">Sign In</Link>
@@ -124,8 +126,9 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Mobile hamburger */}
-        <div className="flex flex-1 justify-end md:hidden">
+        {/* Mobile: theme toggle + hamburger */}
+        <div className="flex flex-1 items-center justify-end gap-1 md:hidden">
+          <ThemeToggle />
           <Button
             variant="ghost"
             size="icon"

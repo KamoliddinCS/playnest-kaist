@@ -48,7 +48,7 @@ export default function LandingPage() {
               className="gap-2 px-8 text-base"
             >
               <Link href="/login">
-                Sign In
+                Sign In / Sign Up
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
