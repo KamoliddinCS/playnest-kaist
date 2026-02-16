@@ -11,9 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PICKUP_INSTRUCTIONS } from "@/lib/config";
+import { PICKUP_INSTRUCTIONS, PAYMENT_ACCOUNT, formatKRW } from "@/lib/config";
 import type { BookingStatus, BookingWithConsole } from "@/lib/types";
-import { CalendarCheck, Info, Loader2, MonitorSmartphone } from "lucide-react";
+import { CalendarCheck, Info, Loader2, MonitorSmartphone, Banknote } from "lucide-react";
 
 const statusVariantMap: Record<
   BookingStatus,
@@ -104,12 +104,40 @@ export default function MyBookingsPage() {
                       {format(new Date(b.created_at), "MMM d, yyyy HH:mm")}
                     </CardDescription>
                   </div>
-                  <Badge variant={statusVariantMap[b.status]} className="shrink-0">
-                    {statusLabelMap[b.status]}
-                  </Badge>
+                  <div className="flex shrink-0 flex-col items-end gap-1.5">
+                    <Badge variant={statusVariantMap[b.status]}>
+                      {statusLabelMap[b.status]}
+                    </Badge>
+                    {b.total_price != null && b.total_price > 0 && (
+                      <span className="text-sm font-semibold text-primary">
+                        {formatKRW(b.total_price)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
 
+              {/* Payment reminder for pending bookings */}
+              {b.status === "pending" && b.total_price != null && b.total_price > 0 && (
+                <CardContent>
+                  <div className="flex gap-3 rounded-md border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
+                    <Banknote className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                    <div>
+                      <p className="text-sm font-medium">
+                        Payment Needed — {formatKRW(b.total_price)}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Transfer the amount to confirm your booking. It will be approved once payment is verified.
+                      </p>
+                      <p className="mt-1.5 rounded bg-background px-2 py-1 text-xs font-medium">
+                        {PAYMENT_ACCOUNT}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              )}
+
+              {/* Pickup info for approved / picked-up bookings */}
               {(b.status === "approved" || b.status === "picked_up") && (
                 <CardContent>
                   <div className="flex gap-3 rounded-md border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950">

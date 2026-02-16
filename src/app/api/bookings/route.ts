@@ -59,11 +59,12 @@ export async function POST(request: Request) {
 
   const admin = createSupabaseAdmin();
 
-  // If a specific device was requested, validate it exists.
+  // If a specific device was requested, validate it exists and get its price.
+  let pricePerDay: number | null = null;
   if (console_id) {
     const { data: device } = await admin
       .from("consoles")
-      .select("id")
+      .select("id, price_per_day")
       .eq("id", console_id)
       .single();
 
@@ -73,6 +74,16 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    pricePerDay = device.price_per_day ?? null;
+  }
+
+  // Calculate total price: round up to full days, multiply by daily rate.
+  let totalPrice: number | null = null;
+  if (pricePerDay && pricePerDay > 0) {
+    const durationMs = end.getTime() - start.getTime();
+    const days = Math.max(1, Math.ceil(durationMs / (24 * 60 * 60 * 1000)));
+    totalPrice = pricePerDay * days;
   }
 
   const { data, error } = await admin
@@ -83,6 +94,7 @@ export async function POST(request: Request) {
       start_at: start.toISOString(),
       end_at: end.toISOString(),
       status: "pending",
+      total_price: totalPrice,
     })
     .select()
     .single();
@@ -96,9 +108,10 @@ export async function POST(request: Request) {
 
   // Notify admins about the new booking request.
   const userEmail = user.email ?? "A user";
+  const feeNote = totalPrice ? ` (₩${totalPrice.toLocaleString()})` : "";
   notifyAdmins(
     "New booking request",
-    `${userEmail} submitted a new booking request.`,
+    `${userEmail} submitted a new booking request${feeNote}.`,
     "/admin"
   );
 

@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { ConsoleWithGames } from "@/lib/types";
+import { formatKRW } from "@/lib/config";
 import {
   ArrowLeft,
   CalendarPlus,
@@ -107,6 +108,16 @@ export default function DeviceDetailPage() {
                 </span>
               )}
             </div>
+
+            {/* Price */}
+            {device.price_per_day != null && device.price_per_day > 0 && (
+              <p className="mt-3 text-xl font-bold text-primary">
+                {formatKRW(device.price_per_day)}
+                <span className="ml-1 text-sm font-normal text-muted-foreground">
+                  per day
+                </span>
+              </p>
+            )}
           </div>
 
           {/* Book button */}

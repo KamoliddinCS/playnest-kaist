@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { ConsoleWithGames } from "@/lib/types";
+import { formatKRW } from "@/lib/config";
 import {
   Disc3,
   Gamepad2,
@@ -162,9 +163,17 @@ function DeviceCard({ device }: { device: ConsoleWithGames }) {
         </div>
 
         <CardHeader className="pb-2 pt-4">
-          <CardTitle className="text-base leading-snug">
-            {device.label}
-          </CardTitle>
+          <div className="flex items-start justify-between gap-2">
+            <CardTitle className="text-base leading-snug">
+              {device.label}
+            </CardTitle>
+            {device.price_per_day != null && device.price_per_day > 0 && (
+              <span className="shrink-0 text-sm font-semibold text-primary">
+                {formatKRW(device.price_per_day)}
+                <span className="text-xs font-normal text-muted-foreground">/day</span>
+              </span>
+            )}
+          </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
             <Badge variant={isAvailable ? "success" : "warning"}>
               {isAvailable ? "Available" : "Maintenance"}

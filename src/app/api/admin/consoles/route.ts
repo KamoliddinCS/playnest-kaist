@@ -27,14 +27,14 @@ export async function POST(request: Request) {
   const authResult = await requireAdmin();
   if (authResult instanceof NextResponse) return authResult;
 
-  let body: { label?: string; image_url?: string | null };
+  let body: { label?: string; image_url?: string | null; price_per_day?: number | null };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
   }
 
-  const { label, image_url } = body;
+  const { label, image_url, price_per_day } = body;
   if (!label || !label.trim()) {
     return NextResponse.json(
       { error: "Label is required." },
@@ -50,6 +50,7 @@ export async function POST(request: Request) {
       label: label.trim(),
       status: "available",
       image_url: image_url?.trim() || null,
+      price_per_day: typeof price_per_day === "number" && price_per_day >= 0 ? price_per_day : null,
     })
     .select()
     .single();

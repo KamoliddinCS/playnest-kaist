@@ -5,9 +5,9 @@ import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { format, addDays, differenceInMilliseconds } from "date-fns";
+import { format, addDays, differenceInMilliseconds, differenceInCalendarDays } from "date-fns";
 import { toast } from "sonner";
-import { MAX_BOOKING_DAYS, TIME_SLOTS } from "@/lib/config";
+import { MAX_BOOKING_DAYS, TIME_SLOTS, PAYMENT_INSTRUCTIONS, PAYMENT_ACCOUNT, formatKRW } from "@/lib/config";
 import type { Console } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -157,6 +157,19 @@ function BookPageInner() {
 
   const selectedDevice = devices.find((d) => d.id === formValues.deviceId);
 
+  // Calculate booking duration and total price.
+  const bookingDays = (() => {
+    if (!formValues.startDate || !formValues.endDate) return 0;
+    const start = new Date(`${formValues.startDate}T${formValues.startTime || "00:00"}`);
+    const end = new Date(`${formValues.endDate}T${formValues.endTime || "00:00"}`);
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) return 0;
+    // Round up to full days (any partial day counts as 1).
+    return Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)));
+  })();
+
+  const pricePerDay = selectedDevice?.price_per_day ?? 0;
+  const totalPrice = pricePerDay > 0 ? pricePerDay * bookingDays : 0;
+
   const checkAvailability = async (data: BookingForm) => {
     setChecking(true);
     setAvailability({ checked: false, available: false });
@@ -219,7 +232,7 @@ function BookPageInner() {
 
   if (submitted) {
     return (
-      <div className="container flex max-w-lg flex-col items-center gap-4 py-20 text-center">
+      <div className="container flex max-w-lg flex-col items-center gap-5 py-20 text-center">
         <CheckCircle2 className="h-16 w-16 text-green-600" />
         <h2 className="text-2xl font-bold">You&apos;re all set!</h2>
         <p className="text-muted-foreground">
@@ -229,6 +242,25 @@ function BookPageInner() {
           </Link>{" "}
           page once it&apos;s confirmed.
         </p>
+
+        {/* Payment instructions */}
+        {totalPrice > 0 && (
+          <div className="w-full rounded-lg border bg-muted/30 p-5 text-left">
+            <p className="text-sm font-semibold">
+              Total: {formatKRW(totalPrice)}
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {PAYMENT_INSTRUCTIONS}
+            </p>
+            <p className="mt-2 rounded-md bg-background p-3 text-sm font-medium">
+              {PAYMENT_ACCOUNT}
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Your booking will be confirmed once payment is verified by the coordinator.
+            </p>
+          </div>
+        )}
+
         <div className="flex gap-3">
           <Button onClick={() => setSubmitted(false)} variant="outline">
             Book Another
@@ -403,6 +435,23 @@ function BookPageInner() {
               <p className="-mt-4 text-sm text-destructive">
                 {errors.endDate.message}
               </p>
+            )}
+
+            {/* Price summary */}
+            {selectedDevice && bookingDays > 0 && pricePerDay > 0 && (
+              <div className="rounded-md border bg-muted/30 p-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {formatKRW(pricePerDay)} × {bookingDays} {bookingDays === 1 ? "day" : "days"}
+                  </span>
+                  <span className="text-lg font-bold text-primary">
+                    {formatKRW(totalPrice)}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Total access fee — paid via transfer after booking is confirmed.
+                </p>
+              </div>
             )}
 
             {/* Availability result */}

@@ -15,6 +15,8 @@ export interface Console {
   label: string;
   status: ConsoleStatus;
   image_url: string | null;
+  /** Daily access fee in KRW (₩). null = free / not yet set. */
+  price_per_day: number | null;
   created_at: string;
 }
 
@@ -46,6 +48,8 @@ export interface Booking {
   end_at: string;
   status: BookingStatus;
   notes: string | null;
+  /** Total fee in KRW quoted at booking time. null = free. */
+  total_price: number | null;
   created_at: string;
 }
 
@@ -68,5 +72,5 @@ export interface BookingWithUser extends Booking {
 
 /** Booking joined with console label (for user views). */
 export interface BookingWithConsole extends Booking {
-  consoles: { label: string } | null;
+  consoles: { label: string; price_per_day: number | null } | null;
 }

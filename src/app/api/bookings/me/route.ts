@@ -11,7 +11,7 @@ export async function GET() {
 
   const { data, error } = await admin
     .from("bookings")
-    .select("*, consoles(label)")
+    .select("*, consoles(label, price_per_day)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 

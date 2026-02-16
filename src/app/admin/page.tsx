@@ -40,6 +40,7 @@ import type {
   Game,
   UserRole,
 } from "@/lib/types";
+import { formatKRW } from "@/lib/config";
 import {
   Check,
   ChevronDown,
@@ -53,6 +54,7 @@ import {
   X,
   PackageCheck,
   PackageOpen,
+  Pencil,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -215,6 +217,7 @@ function BookingsTab() {
                 <TableHead>User</TableHead>
                 <TableHead>Start</TableHead>
                 <TableHead>End</TableHead>
+                <TableHead>Fee</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -233,6 +236,9 @@ function BookingsTab() {
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-xs">
                     {format(new Date(b.end_at), "MMM d HH:mm")}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-xs font-medium">
+                    {b.total_price ? formatKRW(b.total_price) : "—"}
                   </TableCell>
                   <TableCell>
                     <Badge variant={statusVariant[b.status]}>
@@ -304,6 +310,7 @@ function ConsolesTab() {
   const [loading, setLoading] = useState(true);
   const [newLabel, setNewLabel] = useState("");
   const [newImageUrl, setNewImageUrl] = useState("");
+  const [newPrice, setNewPrice] = useState("");
   const [adding, setAdding] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
@@ -337,6 +344,7 @@ function ConsolesTab() {
         body: JSON.stringify({
           label: newLabel.trim(),
           image_url: newImageUrl.trim() || null,
+          price_per_day: newPrice.trim() ? parseInt(newPrice.trim(), 10) : null,
         }),
       });
       const json = await res.json();
@@ -344,6 +352,7 @@ function ConsolesTab() {
       toast.success("Device added.");
       setNewLabel("");
       setNewImageUrl("");
+      setNewPrice("");
       setDialogOpen(false);
       load();
     } catch (e: unknown) {
@@ -428,6 +437,21 @@ function ConsolesTab() {
                     default icon.
                   </p>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="consolePrice">Daily Fee ₩ (optional)</Label>
+                  <Input
+                    id="consolePrice"
+                    type="number"
+                    min="0"
+                    step="1000"
+                    placeholder="e.g. 5000"
+                    value={newPrice}
+                    onChange={(e) => setNewPrice(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Access fee per day in KRW. Leave blank for free.
+                  </p>
+                </div>
               </div>
               <DialogFooter>
                 <Button
@@ -452,6 +476,7 @@ function ConsolesTab() {
               <TableRow>
                 <TableHead className="w-8" />
                 <TableHead>Label</TableHead>
+                <TableHead>Fee/day</TableHead>
                 <TableHead>Games</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
@@ -501,7 +526,31 @@ function ConsoleRow({
   const [newGameImage, setNewGameImage] = useState("");
   const [addingGame, setAddingGame] = useState(false);
   const [deletingGame, setDeletingGame] = useState<string | null>(null);
+  const [editingPrice, setEditingPrice] = useState(false);
+  const [priceInput, setPriceInput] = useState(String(c.price_per_day ?? ""));
+  const [savingPrice, setSavingPrice] = useState(false);
   const gameCount = c.games?.length ?? 0;
+
+  const savePrice = async () => {
+    setSavingPrice(true);
+    try {
+      const val = priceInput.trim() ? parseInt(priceInput.trim(), 10) : null;
+      const res = await fetch(`/api/admin/consoles/${c.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ price_per_day: val }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
+      toast.success("Price updated.");
+      setEditingPrice(false);
+      onReload();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Failed to update price.");
+    } finally {
+      setSavingPrice(false);
+    }
+  };
 
   const addGame = async () => {
     if (!newGame.trim()) return;
@@ -560,6 +609,53 @@ function ConsoleRow({
           )}
         </TableCell>
         <TableCell className="font-medium">{c.label}</TableCell>
+        <TableCell onClick={(e) => e.stopPropagation()}>
+          {editingPrice ? (
+            <div className="flex items-center gap-1">
+              <Input
+                type="number"
+                min="0"
+                step="1000"
+                className="h-7 w-24 text-xs"
+                value={priceInput}
+                onChange={(e) => setPriceInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") savePrice();
+                  if (e.key === "Escape") setEditingPrice(false);
+                }}
+                autoFocus
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                onClick={savePrice}
+                disabled={savingPrice}
+              >
+                <Check className="h-3 w-3" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                onClick={() => setEditingPrice(false)}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          ) : (
+            <button
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                setPriceInput(String(c.price_per_day ?? ""));
+                setEditingPrice(true);
+              }}
+            >
+              {c.price_per_day ? formatKRW(c.price_per_day) : "Free"}
+              <Pencil className="h-3 w-3" />
+            </button>
+          )}
+        </TableCell>
         <TableCell>
           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
             <Disc3 className="h-3 w-3" />
@@ -594,7 +690,7 @@ function ConsoleRow({
 
       {expanded && (
         <TableRow>
-          <TableCell colSpan={6} className="bg-muted/30 p-4">
+          <TableCell colSpan={7} className="bg-muted/30 p-4">
             <div className="space-y-3">
               <p className="text-sm font-medium">
                 Games for {c.label} ({gameCount})

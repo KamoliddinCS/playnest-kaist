@@ -6,6 +6,24 @@ export const PICKUP_INSTRUCTIONS =
   process.env.NEXT_PUBLIC_PICKUP_INSTRUCTIONS ??
   "Pick up from KAIST N1 Building, Room 123. Bring your KAIST ID. Pickup window: Mon\u2013Fri 9:00\u201318:00. Return to the same spot when you\u2019re done!";
 
+/** Payment / transfer instructions shown after a booking is submitted. */
+export const PAYMENT_INSTRUCTIONS =
+  process.env.NEXT_PUBLIC_PAYMENT_INSTRUCTIONS ??
+  "Send the total via KakaoPay or bank transfer to the account shown below. Your booking will be confirmed once payment is verified.";
+
+/** Payment account details (KakaoPay / bank). */
+export const PAYMENT_ACCOUNT =
+  process.env.NEXT_PUBLIC_PAYMENT_ACCOUNT ??
+  "KakaoPay: PlayNest KAIST (or Toss / bank transfer — DM @playnest_kaist on Instagram for details)";
+
+/**
+ * Format a KRW amount with ₩ sign and thousand separators.
+ * e.g. formatKRW(15000) → "₩15,000"
+ */
+export function formatKRW(amount: number): string {
+  return `₩${amount.toLocaleString("ko-KR")}`;
+}
+
 /** Maximum booking duration in days. */
 export const MAX_BOOKING_DAYS = 7;
 

@@ -93,11 +93,11 @@ export default function LandingPage() {
                 title: "Zero storage stress",
                 desc: "No bulky boxes in your room. Borrow when you want, return when done.",
               },
-              {
-                icon: Sparkles,
-                title: "No cost barrier",
-                desc: "Access consoles and games without the full price tag of ownership.",
-              },
+                {
+                  icon: Sparkles,
+                  title: "Affordable access",
+                  desc: "A few thousand won per day — way less than buying. Split it with friends and it's basically free.",
+                },
             ].map((item) => (
               <div
                 key={item.title}
