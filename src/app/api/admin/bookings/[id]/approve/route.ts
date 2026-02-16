@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/supabase/auth-helpers";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
+import { notify } from "@/lib/notifications";
 
 export async function POST(
   _request: Request,
@@ -78,6 +79,14 @@ export async function POST(
       { status: 500 }
     );
   }
+
+  // Notify the user their booking was approved.
+  notify(
+    [booking.user_id],
+    "Booking approved!",
+    "Your booking request has been approved. Check your bookings for pickup info.",
+    "/my-bookings"
+  );
 
   return NextResponse.json({ success: true });
 }

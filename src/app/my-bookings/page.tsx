@@ -75,11 +75,11 @@ export default function MyBookingsPage() {
       {bookings.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            You have no booking requests yet.{" "}
+            No bookings yet!{" "}
             <a href="/catalogue" className="underline">
-              Browse the catalogue
+              Browse what&apos;s available
             </a>{" "}
-            to get started.
+            and book your first device.
           </CardContent>
         </Card>
       ) : (
@@ -116,7 +116,7 @@ export default function MyBookingsPage() {
                     <Info className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
                     <div>
                       <p className="text-sm font-medium">
-                        Pickup &amp; Return Instructions
+                        Pickup &amp; Return Info
                       </p>
                       <p className="mt-1 text-sm text-muted-foreground">
                         {PICKUP_INSTRUCTIONS}

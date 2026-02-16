@@ -74,7 +74,7 @@ export default function DeviceDetailPage() {
       >
         <Link href="/catalogue">
           <ArrowLeft className="h-4 w-4" />
-          Back to Catalogue
+          Back to Browse
         </Link>
       </Button>
 
@@ -109,13 +109,13 @@ export default function DeviceDetailPage() {
             </div>
           </div>
 
-          {/* Rental button */}
+          {/* Book button */}
           <div className="mt-2">
             {isAvailable ? (
               <Button asChild size="lg" className="gap-2">
                 <Link href={`/book?device=${device.id}`}>
                   <CalendarPlus className="h-5 w-5" />
-                  Request Rental
+                  Book This Device
                 </Link>
               </Button>
             ) : (
@@ -143,7 +143,7 @@ export default function DeviceDetailPage() {
         {gameCount === 0 ? (
           <Card>
             <CardContent className="py-12 text-center text-muted-foreground">
-              No games have been added to this device yet.
+              No games listed yet — check back soon!
             </CardContent>
           </Card>
         ) : (

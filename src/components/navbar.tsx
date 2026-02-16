@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { createSupabaseBrowser } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LogOut, Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationBell } from "@/components/notification-bell";
 import { useEffect, useState } from "react";
 import type { UserRole } from "@/lib/types";
 
@@ -64,8 +66,8 @@ export function Navbar() {
 
   const links = user
     ? [
-        { href: "/catalogue", label: "Catalogue" },
-        { href: "/book", label: "Request Rental" },
+        { href: "/catalogue", label: "Browse" },
+        { href: "/book", label: "Book" },
         { href: "/my-bookings", label: "My Bookings" },
         { href: "/account", label: "Account" },
         ...(user.role === "admin"
@@ -78,10 +80,13 @@ export function Navbar() {
     <nav className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
         <Link href="/" className="mr-6 flex items-center space-x-2">
-          {/* PlayNest brand mark */}
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-xs font-black text-primary-foreground">
-            PN
-          </span>
+          <Image
+            src="/playnestlogo.png"
+            alt="PlayNest logo"
+            width={32}
+            height={32}
+            className="h-8 w-8 rounded-lg object-cover"
+          />
           <span className="hidden font-bold sm:inline-block">
             PlayNest <span className="font-normal text-muted-foreground">KAIST</span>
           </span>
@@ -107,6 +112,7 @@ export function Navbar() {
 
           <div className="flex items-center space-x-2">
             <ThemeToggle />
+            {user && <NotificationBell />}
             {!loading && !user && (
               <Button asChild size="sm">
                 <Link href="/login">Sign In</Link>
@@ -126,8 +132,9 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Mobile: theme toggle + hamburger */}
+        {/* Mobile: notifications + theme toggle + hamburger */}
         <div className="flex flex-1 items-center justify-end gap-1 md:hidden">
+          {user && <NotificationBell />}
           <ThemeToggle />
           <Button
             variant="ghost"

@@ -49,6 +49,18 @@ export interface Booking {
   created_at: string;
 }
 
+/* ─── Notifications ─── */
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  link: string | null;
+  read: boolean;
+  created_at: string;
+}
+
 /** Booking joined with user email (for admin views). */
 export interface BookingWithUser extends Booking {
   users: { email: string } | null;

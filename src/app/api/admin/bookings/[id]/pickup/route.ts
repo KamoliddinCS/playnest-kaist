@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/supabase/auth-helpers";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
+import { notify } from "@/lib/notifications";
 
 export async function POST(
   _request: Request,
@@ -13,7 +14,7 @@ export async function POST(
 
   const { data: booking, error: bErr } = await admin
     .from("bookings")
-    .select("status")
+    .select("status, user_id")
     .eq("id", params.id)
     .single();
 
@@ -42,6 +43,14 @@ export async function POST(
       { status: 500 }
     );
   }
+
+  // Notify the user their device has been marked as picked up.
+  notify(
+    [booking.user_id],
+    "Device picked up",
+    "Your device has been marked as picked up. Enjoy your games!",
+    "/my-bookings"
+  );
 
   return NextResponse.json({ success: true });
 }

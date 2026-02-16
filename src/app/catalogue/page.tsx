@@ -79,17 +79,17 @@ export default function CataloguePage() {
     <div className="container py-10">
       {/* Header */}
       <div className="mb-10">
-        <h1 className="text-3xl font-bold tracking-tight">Device Catalogue</h1>
+        <h1 className="text-3xl font-bold tracking-tight">What&apos;s Available</h1>
         <p className="mt-2 max-w-xl text-muted-foreground">
-          Browse the devices currently in our collection. Pick one you&apos;d
-          like to rent and submit a booking request.
+          See what consoles and handhelds you can borrow this week. Tap a device
+          to check out its games and book it.
         </p>
       </div>
 
       {devices.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center text-muted-foreground">
-            No devices are listed yet. Check back soon!
+            Nothing here yet — check back soon!
           </CardContent>
         </Card>
       ) : (
@@ -99,7 +99,7 @@ export default function CataloguePage() {
             <section className="mb-12">
               <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
                 <span className="h-2 w-2 rounded-full bg-green-500" />
-                Available ({available.length})
+                Ready to borrow ({available.length})
               </h2>
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {available.map((d) => (
@@ -184,7 +184,7 @@ function DeviceCard({ device }: { device: ConsoleWithGames }) {
           {isAvailable ? (
             <span className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
               <CalendarPlus className="h-4 w-4" />
-              View &amp; Rent
+              View &amp; Book
             </span>
           ) : (
             <span className="inline-flex w-full items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium text-muted-foreground">

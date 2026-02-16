@@ -95,8 +95,8 @@ export default function AccountPage() {
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <User className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle>Account</CardTitle>
-          <CardDescription>Your profile information.</CardDescription>
+          <CardTitle>Your Account</CardTitle>
+          <CardDescription>Manage your PlayNest profile.</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/supabase/auth-helpers";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { MAX_BOOKING_DAYS } from "@/lib/config";
+import { notifyAdmins } from "@/lib/notifications";
 
 export async function POST(request: Request) {
   const authResult = await requireAuth();
@@ -92,6 +93,14 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+
+  // Notify admins about the new booking request.
+  const userEmail = user.email ?? "A user";
+  notifyAdmins(
+    "New booking request",
+    `${userEmail} submitted a new booking request.`,
+    "/admin"
+  );
 
   return NextResponse.json(data, { status: 201 });
 }

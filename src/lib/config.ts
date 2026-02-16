@@ -1,10 +1,10 @@
 /** Allowed email domains for login. Easy to extend — just add to the array. */
 export const ALLOWED_EMAIL_DOMAINS = ["kaist.ac.kr", "kaist.edu"] as const;
 
-/** Pickup / return coordination instructions shown to users with approved bookings. */
+/** Pickup / return coordination info shown to users with approved bookings. */
 export const PICKUP_INSTRUCTIONS =
   process.env.NEXT_PUBLIC_PICKUP_INSTRUCTIONS ??
-  "Please coordinate pickup at KAIST N1 Building, Room 123. Bring your KAIST ID card. Available hours: Mon–Fri 9:00–18:00.";
+  "Pick up from KAIST N1 Building, Room 123. Bring your KAIST ID. Pickup window: Mon\u2013Fri 9:00\u201318:00. Return to the same spot when you\u2019re done!";
 
 /** Maximum booking duration in days. */
 export const MAX_BOOKING_DAYS = 7;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -64,16 +65,20 @@ export default function LoginPage() {
     <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-lg font-black text-primary-foreground">
-            PN
-          </div>
+          <Image
+            src="/playnestlogo.png"
+            alt="PlayNest logo"
+            width={56}
+            height={56}
+            className="mx-auto mb-2 h-14 w-14 rounded-xl object-cover"
+          />
           <CardTitle className="text-2xl">
-            {tab === "signin" ? "Sign in to PlayNest" : "Create an Account"}
+            {tab === "signin" ? "Welcome back" : "Join PlayNest"}
           </CardTitle>
           <CardDescription>
             {tab === "signin"
-              ? "Enter your KAIST email and password."
-              : "Sign up with your KAIST email to get started."}
+              ? "Sign in with your KAIST email."
+              : "Create an account to start borrowing consoles."}
           </CardDescription>
         </CardHeader>
 
@@ -107,11 +112,10 @@ export default function LoginPage() {
           </Tabs>
 
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            Only{" "}
+            KAIST email required&nbsp;&mdash;&nbsp;
             <span className="font-medium">
               {ALLOWED_EMAIL_DOMAINS.join(", ")}
-            </span>{" "}
-            addresses are accepted.
+            </span>
           </p>
         </CardContent>
       </Card>

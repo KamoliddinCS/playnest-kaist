@@ -9,7 +9,11 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "PlayNest KAIST",
   description:
-    "Browse devices, request rentals, and coordinate pickup & return — the KAIST community's device lending hub.",
+    "Weekend gaming, simplified. Borrow a console, play with friends, and return — built by KAIST students, for KAIST students.",
+  icons: {
+    icon: "/playnestlogo.png",
+    apple: "/playnestlogo.png",
+  },
 };
 
 export default function RootLayout({

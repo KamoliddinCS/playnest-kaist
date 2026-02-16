@@ -221,21 +221,20 @@ function BookPageInner() {
     return (
       <div className="container flex max-w-lg flex-col items-center gap-4 py-20 text-center">
         <CheckCircle2 className="h-16 w-16 text-green-600" />
-        <h2 className="text-2xl font-bold">Request Submitted</h2>
+        <h2 className="text-2xl font-bold">You&apos;re all set!</h2>
         <p className="text-muted-foreground">
-          Your rental request is now pending review. You&apos;ll see the status
-          update on your{" "}
+          Your booking request is in. We&apos;ll update the status on your{" "}
           <Link href="/my-bookings" className="underline">
             My Bookings
           </Link>{" "}
-          page.
+          page once it&apos;s confirmed.
         </p>
         <div className="flex gap-3">
           <Button onClick={() => setSubmitted(false)} variant="outline">
-            Submit Another Request
+            Book Another
           </Button>
           <Button asChild>
-            <Link href="/catalogue">Back to Catalogue</Link>
+            <Link href="/catalogue">Back to Browse</Link>
           </Button>
         </div>
       </div>
@@ -248,11 +247,11 @@ function BookPageInner() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <CalendarCheck className="h-5 w-5 text-primary" />
-            <CardTitle>Request a Rental</CardTitle>
+            <CardTitle>Book a Device</CardTitle>
           </div>
           <CardDescription>
-            Select a device and your desired date &amp; time range (30-min
-            increments, max {MAX_BOOKING_DAYS} days).
+            Pick a device and a time window that works for you (30-min
+            slots, up to {MAX_BOOKING_DAYS} days).
           </CardDescription>
         </CardHeader>
 
@@ -423,8 +422,8 @@ function BookPageInner() {
                 <div>
                   <p className="font-medium">
                     {availability.available
-                      ? "This device is available for your selected window!"
-                      : "This device is not available for that window."}
+                      ? "Good news — this device is free for your dates!"
+                      : "Sorry, this device isn\u2019t free for those dates."}
                   </p>
                   {availability.reason && (
                     <p className="mt-1 text-sm text-muted-foreground">
