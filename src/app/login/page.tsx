@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mail, Lock, Loader2, Eye, EyeOff, UserRound } from "lucide-react";
+import { Mail, Lock, Loader2, Eye, EyeOff, UserRound, CheckCircle2 } from "lucide-react";
 
 /* ─── Validation ─── */
 
@@ -227,6 +227,7 @@ function SignInFormComponent({ onSuccess }: { onSuccess: () => void }) {
 function SignUpFormComponent({ onSuccess }: { onSuccess: () => void }) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [confirmationSent, setConfirmationSent] = useState<string | null>(null);
 
   const {
     register,
@@ -245,6 +246,7 @@ function SignUpFormComponent({ onSuccess }: { onSuccess: () => void }) {
       password: data.password,
       options: {
         data: { full_name: data.name },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 
@@ -253,29 +255,34 @@ function SignUpFormComponent({ onSuccess }: { onSuccess: () => void }) {
       return;
     }
 
-    // If Supabase returned a session, the user is signed in immediately
-    // (email confirmation is disabled).
+    // If Supabase returned a session, email confirmation is disabled —
+    // sign the user in immediately.
     if (signUpData.session) {
       onSuccess();
       return;
     }
 
-    // If no session was returned, sign in explicitly with the credentials.
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
-    });
-
-    if (signInError) {
-      // If sign-in fails, it likely means email confirmation IS required.
-      setServerError(
-        "Account created! Please check your email to confirm, then sign in."
-      );
-      return;
-    }
-
-    onSuccess();
+    // No session = confirmation email was sent. Show success state.
+    setConfirmationSent(data.email);
   };
+
+  // ─── Confirmation sent state ───
+  if (confirmationSent) {
+    return (
+      <div className="flex flex-col items-center gap-4 py-4 text-center">
+        <CheckCircle2 className="h-12 w-12 text-green-600" />
+        <h3 className="text-lg font-semibold">Check your inbox</h3>
+        <p className="text-sm text-muted-foreground">
+          We sent a confirmation link to{" "}
+          <span className="font-medium text-foreground">{confirmationSent}</span>.
+          Click the link to verify your email and activate your account.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Didn&apos;t get it? Check your spam folder or try signing up again.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
