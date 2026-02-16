@@ -25,32 +25,32 @@ No ownership commitment. No storage headaches. No cost barrier.
 
 ---
 
-## ✨ Features
+## Features
 
-### 🎮 Device Catalogue
+### Device Catalogue
 Browse every console, handheld, and accessory available — complete with images, availability status, and installed game libraries.
 
-### 📅 Smart Booking
+### Smart Booking
 Pick a device, choose your dates, check real-time availability, and submit a booking request — all in under a minute.
 
-### 🕹️ Game Library
+### Game Library
 Tap into any device to see exactly which games are installed, so you know what you're getting before you book.
 
-### 🔔 Live Notifications
+### Live Notifications
 Get notified the moment your booking is approved, picked up, or returned — no need to keep refreshing.
 
-### 🌙 Dark Mode
+### Dark Mode
 Easy on the eyes during those late-night gaming sessions. Toggles instantly between light and dark themes.
 
-### 🔐 KAIST-Only Access
+### KAIST-Only Access
 Sign up with your KAIST email — that's your trust badge. No external accounts, no strangers.
 
-### 🛠️ Admin Dashboard
+### Admin Dashboard
 A dedicated panel for coordinators to manage devices, approve or reject requests, and track pickups & returns.
 
 ---
 
-## 💡 Why PlayNest?
+## Why PlayNest?
 
 | Problem | PlayNest Fix |
 |---|---|
@@ -62,7 +62,7 @@ A dedicated panel for coordinators to manage devices, approve or reject requests
 
 ---
 
-## 🧱 Built With
+## Built With
 
 | Layer | Tech |
 |---|---|
@@ -77,19 +77,7 @@ A dedicated panel for coordinators to manage devices, approve or reject requests
 
 ---
 
-## 📸 Quick Look
-
-| Landing | Catalogue | Booking |
-|---|---|---|
-| Clean hero with one CTA | Device cards with images & game counts | Date picker with real-time availability |
-
-| Notifications | Admin Panel | Dark Mode |
-|---|---|---|
-| Bell icon with unread badges | Manage bookings & devices in tabs | One-click toggle, system-aware |
-
----
-
-## 🏫 Campus Trust Signals
+## Campus Trust Signals
 
 - **KAIST email required** — only `@kaist.ac.kr` and `@kaist.edu` accounts
 - **Campus pickup only** — collect and return on campus
@@ -99,5 +87,5 @@ A dedicated panel for coordinators to manage devices, approve or reject requests
 
 <div align="center">
   <br/>
-  <p>Made with ☕ at KAIST</p>
+  <p>Made at KAIST</p>
 </div>
