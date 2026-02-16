@@ -10,10 +10,7 @@ export const metadata: Metadata = {
   title: "PlayNest KAIST",
   description:
     "Weekend gaming, simplified. Borrow a console, play with friends, and return — built by KAIST students, for KAIST students.",
-  icons: {
-    icon: "/playnestlogo.png",
-    apple: "/playnestlogo.png",
-  },
+  // favicon.ico, icon.png, and apple-icon.png are auto-detected from src/app/
 };
 
 export default function RootLayout({
