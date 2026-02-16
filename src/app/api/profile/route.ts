@@ -15,7 +15,13 @@ export async function PATCH(request: Request) {
   const result = await requireAuth();
   if (result instanceof NextResponse) return result;
 
-  const body = await request.json();
+  let body: { name?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
+  }
+
   const name = typeof body.name === "string" ? body.name.trim() : null;
 
   const admin = createSupabaseAdmin();
